@@ -136,4 +136,38 @@ FA FA::asmTo(FA fa)
 		else
 			m_transitions.push_back(pair<pair<int,char>, int>(itr->first, itr->second));
 	}
+	return *this;
 }
+	FA FA::conTo(FA fa)
+	{
+		//Adding the second FA's states to the first FAs states
+		//Adding 1 to account for the initial state being a 0
+		int fstlst= *(std::max_element(m_states.begin(),m_states.end()))+1;
+		std::set<int>::iterator it=fa.m_states.begin();
+		for(;it!=fa.m_states.end();it++)
+		{
+				m_states.insert(*(it)+fstlst);
+		}
+		//We add accepting states of the second FA to the first, then the initial state of the first will
+		//be accepting if at least one of the FA's initial states are accepting
+		for(it=fa.m_final_states.begin();it!=fa.m_final_states.end();it++)
+		{
+				m_final_states.insert(*(it)+fstlst);
+		}
+		//First FA's transitions to a final state should instead be to second FA's initial state
+		std::vector<std::pair<std::pair<int,char>, int> >::iterator itr=m_transitions.begin();
+		for(;itr!=m_transitions.end();itr++)
+		{
+			if(m_final_states.count(itr->second))//if it is a final state
+				itr->second=fa.m_initial;
+		}
+		//Second FA's transitions from the initial state should also work from first FA's accepting states
+		itr=fa.m_transitions.begin();
+		for(;itr!=fa.m_transitions.end();itr++)
+		{
+			//Adding transitions that are from second FA's initial state
+			it=m_final_states.begin();
+			for(;it!=m_final_states.end();it++)
+				m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(*(it), (itr->first).second), itr->second));
+		}
+	}
