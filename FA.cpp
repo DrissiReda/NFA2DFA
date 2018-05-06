@@ -80,17 +80,11 @@ FA FA::starring()
 	//if the initial state is not acceptant we should
 	//make it so
 	//The final state
-	int fstlst= *(std::max_element(m_states.begin(),m_states.end()));
+	int last= *(std::max_element(m_states.begin(),m_states.end()));
 	if(m_final_states.find(m_initial)== m_final_states.end())
 		m_final_states.insert(m_initial);
-	std::cout << fstlst << std::endl;
 	//To add the looping part we must get rid of the final state in transitions
 	//and overwrite it with the original state that way we ensure we can return to the start
-	int last;
-	for(auto i: m_states)
-	{
-		last=i;
-	}
 	std::vector<std::pair<std::pair<int,char>, int> >::iterator it=m_transitions.begin();
 	for(;it!=m_transitions.end();++it)
 	{
@@ -98,11 +92,12 @@ FA FA::starring()
 			it->second=m_initial;
 		if((it->first).first==last) // set the before value of the transition
 		{
-			//add the updated transition
-			m_transitions.erase(it);
-			m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(m_initial, (it->first).second), it->second));
+			//update the transition
+			(it->first).first=m_initial;
 		}
 	}
+	//We remove the last state
+	m_states.erase(std::max_element(m_states.begin(),m_states.end()));
 	return *this;
 }
 FA FA::asmTo(FA fa)
