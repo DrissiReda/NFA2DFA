@@ -148,6 +148,8 @@ FA FA::asmTo(FA fa)
 		{
 				m_states.insert(*(it)+fstlst);
 		}
+		//Get rid of the final states of the first automaton
+		m_final_states.clear();
 		//We add accepting states of the second FA to the first, then the initial state of the first will
 		//be accepting if at least one of the FA's initial states are accepting
 		for(it=fa.m_final_states.begin();it!=fa.m_final_states.end();it++)
