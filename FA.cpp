@@ -134,7 +134,7 @@ FA FA::asmTo(FA fa)
 		if((itr->first).first==fa.m_initial)
 			m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(m_initial, (itr->first).second), itr->second));
 		else
-			m_transitions.push_back(pair<pair<int,char>, int>(itr->first, itr->second));
+			m_transitions.push_back(*itr);
 	}
 	return *this;
 }
@@ -156,7 +156,7 @@ FA FA::asmTo(FA fa)
 		{
 				m_final_states.insert(*(it)+fstlst);
 		}
-		//First FA's transitions to a final state should instead be to second FA's initial state
+		//First FA's transitions to an accepting state should instead be to second FA's initial state
 		std::vector<std::pair<std::pair<int,char>, int> >::iterator itr=m_transitions.begin();
 		for(;itr!=m_transitions.end();itr++)
 		{
@@ -168,8 +168,14 @@ FA FA::asmTo(FA fa)
 		for(;itr!=fa.m_transitions.end();itr++)
 		{
 			//Adding transitions that are from second FA's initial state
+			if((itr->first).first==fa.m_initial)
+			{
 			it=m_final_states.begin();
 			for(;it!=m_final_states.end();it++)
 				m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(*(it), (itr->first).second), itr->second));
+			}
+			//Adding other transitions
+			else
+				m_transitions.push_back(*itr);
 		}
 	}
