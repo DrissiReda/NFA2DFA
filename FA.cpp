@@ -165,7 +165,7 @@ FA FA::asmTo(FA fa)
 			{
 			it=m_final_states.begin();
 			for(;it!=m_final_states.end();it++)
-				m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(*(it), (itr->first).second), itr->second));
+				add_transition(*(it), (itr->first).second, itr->second))
 			}
 			//Adding other transitions
 			else
