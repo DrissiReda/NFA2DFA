@@ -25,5 +25,6 @@ int main(int argc, char* argv[])
 		fa.input(inp);
 	}
 	fa.starring();
+	fa.asmTo(fa);
 	return 0;
 }
