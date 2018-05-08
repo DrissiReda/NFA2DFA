@@ -25,6 +25,7 @@ class FA
 {
 public:
 	explicit FA(int initial, bool isfinal);
+	FA();
 	FA(const FA &fa);
 	~FA(void);
 	FA& operator=(const FA &fa);

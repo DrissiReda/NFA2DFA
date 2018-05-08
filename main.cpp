@@ -3,6 +3,107 @@
 
 using namespace std;
 
+
+FA constructFA()
+{
+	int st;
+	bool acc;
+	char inp;
+	cout << "Choose your initial state " << endl;
+	cin >> st;
+	cout << "Is it accepting? [y/N]" << endl;
+	cin >> inp;
+	if(inp=='y' || inp=='Y')
+		acc=true;
+	else if (inp=='n' || inp=='N')
+		acc=false;
+	else
+	{
+		cout << "Did not quite get that, but I'll take it as a no" << endl;
+	}
+	FA fa(inp,acc);
+	cout << "Start entering your states" << endl;
+	while(true)
+	{
+		cin >> st;
+		cout << "Is it accepting? [y/N]" << endl;
+		cin >> inp;
+		if(inp=='y' || inp=='Y')
+			acc=true;
+		else if (inp=='n' || inp=='N')
+			acc=false;
+		else
+		{
+			cout << "Did not quite get that, but I'll take it as a no" << endl;
+		}
+		fa.add_state(inp,acc);
+		if(cin.eof()) break;
+		cout << "Next state :[You can exit with Ctrl+D]"<<endl;
+	}
+	//Transitions
+	cout << "Enter your transitions" << endl;
+	int dst;
+	while(true)
+	{
+		cout << "Source of the transition " << endl;
+		cin >> st;
+		cout << "Element to consume " << endl;
+		cin >> inp;
+		cout << "Destination of the transition" << endl;
+		cin >> dst;
+		fa.add_transition(st,inp,dst);
+		if(cin.eof()) break;
+		cout << "Next transition :[You can exit with Ctrl+D]"<<endl;
+	}
+	return fa;
+}
+void simulate()
+{
+	char inp;
+	cout << "Construct your automaton" << endl;
+	FA fa=constructFA();
+	while(true)
+	{
+		cout << "State: " << fa.state() << "  " << fa.is_accepting()?"true":"false";
+		cout << endl;
+		cin >> inp;
+		if(cin.eof()) break;
+		fa.input(inp);
+	}
+}
+void concatenate()
+{
+	cout << "construct your first automaton" << endl;
+	FA fa1=constructFA();
+	cout << "construct your second automaton " << endl;
+	FA fa2=constructFA();
+	cout << "Watch them concatenate" << endl;
+	fa1.conTo(fa2);
+}
+void starring()
+{
+	cout << "construct your automaton" << endl;
+	FA fa=constructFA();
+	cout << "Applying a kleene star on your automaton" << endl;
+	fa.starring();
+}
+void assmble()
+{
+	cout << "construct your first automaton" << endl;
+	FA fa1=constructFA();
+	cout << "construct your second automaton " << endl;
+	FA fa2=constructFA();
+	cout << "Watch them combine" << endl;
+	fa1.asmTo(fa2);
+}
+void NFA2DFA()
+{
+	cout << "construct your automaton" << endl;
+	FA fa=constructFA();
+	cout << "Converting your automaton to a DFA" << endl;
+	int i=0;
+	fa.determinize(&i);
+}
 int main(int argc, char* argv[])
 {
 	FA fa(0, false);
@@ -15,18 +116,27 @@ int main(int argc, char* argv[])
 	fa.add_transition(3,'a',0);
 	fa.add_transition(3,'b',0);
 
-	char inp;
+	cout << "Choose an option " << endl;
+	cout << "--------------------" << endl;
+	cout << "1.for simulating"    <<endl;
+	cout << "2.for a Kleene Star" <<endl;
+	cout << "3.for a Kleene |"    <<endl;
+	cout << "4.for concatenation" <<endl;
+	cout << "5.for converting to DFA" << endl;
+	cout << "Enter any other key to quit" << endl;
+	int in;
 	while(true)
 	{
-		cout << "State: " << fa.state() << "  " << fa.is_accepting()?"true":"false";
-		cout << endl;
-		cin >> inp;
-		if(inp=='_') break;
-		fa.input(inp);
+		cin>>in;
+		switch(in)
+		{
+			case 1 : simulate(); break;
+			case 2 : starring(); break;
+			case 3 : assmble(); break;
+			case 4 : concatenate(); break;
+			case 5 : NFA2DFA(); break;
+			default: return 0;
+		}
 	}
-	fa.starring();
-	fa.asmTo(fa);
-	int i=0;
-	fa.determinize(&i);
 	return 0;
 }

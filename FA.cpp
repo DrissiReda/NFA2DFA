@@ -9,7 +9,10 @@ FA::FA(int initial, bool isfinal)
 	add_state(initial, isfinal);
 	add_state(-1, false); // invalid dead state
 }
-
+FA::FA()
+{
+	add_state(-1,false);
+}
 FA::FA(const FA &fa)
 {
 	this->m_initial= this->m_state=fa.m_initial;
@@ -24,11 +27,20 @@ FA& FA::operator=(const FA &fa)
 }
 FA::~FA(void)
 {
+	std::vector<std::pair< std::pair<int,char>,int> > t;
+	std::set<int> s,f; std::set<char> a;
+	m_states.swap(s);
+	m_final_states.swap(f);
+	m_transitions.swap(t);
+	m_alpbt.swap(a);
+
 }
 //adds a state to the automaton
 
 void FA::add_state(int s, bool isfinal)
 {
+	if(m_states.size()<2)
+		m_initial=m_state=s;
 	m_states.insert(s);
 	if(isfinal) m_final_states.insert(s);
 }
@@ -38,7 +50,6 @@ void FA::add_transition(int src, char input, int dest)
 {
 	m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(src, input), dest));
 	//update alphabet
-	if(!m_alpbt.count(input))
 		m_alpbt.insert(input);
 }
 int FA::duplicate_trans(int src,char input)
@@ -219,8 +230,8 @@ FA FA::asmTo(FA fa)
 					//the rest is only if we found transitions
 					continue;
 				}
-				std::vector<int> tmp(transcount),tmp2;
-				int cnt=0;
+				//By using a set we do not need to remove duplicates
+				std::set<int> tmp;
 				//again for every state in the current column
 				for(int src=0;src<curr_col->table[0].size();src++)
 				{
@@ -228,14 +239,15 @@ FA FA::asmTo(FA fa)
 						{
 							//if found we should add it
 							if(m_transitions[j].first == std::make_pair(curr_col->table[0][src],*input))
-								tmp[cnt++]=m_transitions[j].second;
+								tmp.insert(m_transitions[j].second);
 						}
 				}
-				//tmp2=remove_duplicates();
 				//this duplicate free set is what we're gonna use for our final version
+				std::set<int>::iterator tmp_itr=tmp.begin();
 				for(int j=0;j<curr_col->table[index].size();j++)
 				{
-					curr_col->table[index][j]=tmp2[j];
+					curr_col->table[index][j]=*(tmp_itr);
+					++tmp_itr;
 				}
 				++index;
 			}
@@ -249,7 +261,7 @@ FA FA::asmTo(FA fa)
 					if(!is_in_curr_col(curr_col->table[index],index,curr_col))
 					{
 						//new column should be added if its header is legal
-						if(curr_col->table[index][0]!= -1)
+						if(curr_col->table[index].size() && curr_col->table[index][0]!= -1)
 							add_col(dt,curr_col->table[index],state);
 					}
 				++index;
@@ -312,16 +324,16 @@ FA FA::asmTo(FA fa)
 	}
 	FA FA::build_dfa(std::list<Det_Table> dt)
 	{
-		FA *ret;
+		FA ret;
 		std::list<Det_Table>::iterator it=dt.begin();
 		//the initial state is the state of the first element
 		m_initial=it->state;
 		//copy the alphabet, it didn't change
-		ret->m_alpbt.insert(m_alpbt.begin(),m_alpbt.end());
+		ret.m_alpbt.insert(m_alpbt.begin(),m_alpbt.end());
 		//copying states
 		for(;it!=dt.end();it++)
 		{
-			ret->m_states.insert(it->state);
+			ret.m_states.insert(it->state);
 		}
 		//finding new accepting states
 		for(it=dt.begin();it!=dt.end();it++)
@@ -329,7 +341,7 @@ FA FA::asmTo(FA fa)
 			for(int i=0;i<it->table[0].size();i++)
 			{
 				if(m_final_states.count(it->table[0][i]))
-					{ret->m_final_states.insert(it->state);break;}
+					{ret.m_final_states.insert(it->state);break;}
 			}
 		}
 		// mapping transitions
@@ -351,9 +363,9 @@ FA FA::asmTo(FA fa)
 							if(i==it->table[index].size())
 								dest=itr->state;
 						}
-					ret->add_transition(it->state,*input,dest);
+					ret.add_transition(it->state,*input,dest);
 				}
 			}
 		}
-		return *ret;
+		return ret;
 	}
