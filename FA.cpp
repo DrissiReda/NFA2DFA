@@ -37,6 +37,17 @@ void FA::add_state(int s, bool isfinal)
 void FA::add_transition(int src, char input, int dest)
 {
 	m_transitions.push_back(pair<pair<int,char>, int>(pair<int,char>(src, input), dest));
+	//update alphabet
+	if(!m_alpbt.count(input))
+		m_alpbt.insert(input);
+}
+int FA::duplicate_trans(int src,char input)
+{
+	int count=0;
+	for(int i=0;i<m_transitions.size();i++)
+		if(m_transitions[i].first== std::make_pair(src,input))
+			count++;
+	return count;
 }
 //useful if you wanna loop
 
@@ -65,7 +76,7 @@ int FA::input(char inp)
 
 bool FA::is_accepting()
 {
-	return m_final_states.count(m_state)!=0;
+	return m_final_states.count(m_state);
 }
 
 //this requires no comments whatsoever
@@ -165,10 +176,82 @@ FA FA::asmTo(FA fa)
 			{
 			it=m_final_states.begin();
 			for(;it!=m_final_states.end();it++)
-				add_transition(*(it), (itr->first).second, itr->second))
+				add_transition(*(it), (itr->first).second, itr->second);
 			}
 			//Adding other transitions
 			else
 				m_transitions.push_back(*itr);
 		}
+	}
+	FA FA::determinize(int *state)
+	{
+		Det_Table col,curr_col,tmp_col;
+		std::vector<std::pair<std::pair<int,char>, int> > trans;
+		col.state=(*state)++;
+
+		col.table.resize(m_alpbt.size());
+		col.table[0].push_back(m_initial); // 0.0 should have the initial state
+
+		curr_col=col;
+
+		int transcount=0;
+		while(true)
+		{
+			//for every element of the alphabet
+			int index=0;
+			for(std::set<char>::iterator input=m_alpbt.begin(); input!=m_alpbt.end();input++)
+			{
+				transcount=0;
+				//for every state in the current column
+				for(int src=0;src<curr_col.table[0].size();src++)
+				{
+					//how many go from state [0][src] using the character input
+					transcount+= duplicate_trans(src,*input);
+				}
+				if(!transcount)
+				{
+					//inserting -1 into table[input][0] because we found no transitions
+					curr_col.table[index].push_back(-1);
+					//the rest is only if we found transitions
+					continue;
+				}
+				std::vector<int> tmp(transcount),tmp2;
+				int cnt=0;
+				//again for every state in the current column
+				for(int src=0;src<curr_col.table[0].size();src++)
+				{
+						for(int j=0;j<m_transitions.size();j++)
+						{
+							//if found we should add it
+							if(m_transitions[j].first == std::make_pair(curr_col.table[0][src],*input))
+								tmp[cnt++]=m_transitions[j].second;
+						}
+				}
+				//tmp2=remove_duplicates();
+				//this duplicate free set is what we're gonna use for our final version
+				for(int j=0;j<curr_col.table[index].size();j++)
+				{
+					curr_col.table[index][j]=tmp2[j];
+				}
+				++index;
+			}
+			index=0;
+			for(std::set<char>::iterator input=m_alpbt.begin(); input!=m_alpbt.end();input++)
+			{
+				//checking if it's in the column
+				if(!is_in_col())
+					//checking if it's in the current column
+					if(!is_in_curr_col())
+					{
+						//new column should be added if its header is legal
+						if(curr_col.table[index][0]!= -1)
+							add_col();
+					}
+				++index;
+			}
+			//if no more columns are added we can break
+		}
+
+		//change the table into a finite automata 
+		return *this;
 	}

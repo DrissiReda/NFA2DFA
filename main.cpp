@@ -26,5 +26,7 @@ int main(int argc, char* argv[])
 	}
 	fa.starring();
 	fa.asmTo(fa);
+	int i=0;
+	fa.determinize(&i);
 	return 0;
 }
