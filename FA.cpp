@@ -256,7 +256,7 @@ FA FA::asmTo(FA fa)
 			}
 			//if no more columns are added we can break
 		} while (curr_col == dt.end());
-
+		build_dfa(dt);
 		//change the table into a finite automata
 		return *this;
 	}
@@ -309,4 +309,51 @@ FA FA::asmTo(FA fa)
 		for(int i=0;i<tab.size();i++)
 			it->table[0][i]=tab[i];
 		return;
+	}
+	FA FA::build_dfa(std::list<Det_Table> dt)
+	{
+		FA *ret;
+		std::list<Det_Table>::iterator it=dt.begin();
+		//the initial state is the state of the first element
+		m_initial=it->state;
+		//copy the alphabet, it didn't change
+		ret->m_alpbt.insert(m_alpbt.begin(),m_alpbt.end());
+		//copying states
+		for(;it!=dt.end();it++)
+		{
+			ret->m_states.insert(it->state);
+		}
+		//finding new accepting states
+		for(it=dt.begin();it!=dt.end();it++)
+		{
+			for(int i=0;i<it->table[0].size();i++)
+			{
+				if(m_final_states.count(it->table[0][i]))
+					{ret->m_final_states.insert(it->state);break;}
+			}
+		}
+		// mapping transitions
+		for(it=dt.begin();it!=dt.end();it++) // each column
+		{
+			int index=0;
+			for(std::set<char>::iterator input=m_alpbt.begin(); input!=m_alpbt.end();input++)
+			{
+				//We will add the transition if it's valid (invalid is -1)
+				if(it->table[index][0]!=-1)
+				{
+					//find destination
+					int dest;
+					for(std::list<Det_Table>::iterator itr=dt.begin();itr!=dt.end();itr++)
+						for(int i=0;i<it->table[index].size();i++)
+						{
+							if(itr->table[0][i]!=it->table[index][i])
+								break;
+							if(i==it->table[index].size())
+								dest=itr->state;
+						}
+					ret->add_transition(it->state,*input,dest);
+				}
+			}
+		}
+		return *ret;
 	}
