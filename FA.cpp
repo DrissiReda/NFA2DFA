@@ -183,19 +183,23 @@ FA FA::asmTo(FA fa)
 				m_transitions.push_back(*itr);
 		}
 	}
+
+
 	FA FA::determinize(int *state)
 	{
-		Det_Table col,curr_col,tmp_col;
+		std::list<Det_Table> dt;
+		std::list<Det_Table>::iterator curr_col,tmp_col;
 		std::vector<std::pair<std::pair<int,char>, int> > trans;
-		col.state=(*state)++;
+		dt.emplace_back(Det_Table());
+		(dt.begin())->state=(*state)++;
 
-		col.table.resize(m_alpbt.size());
-		col.table[0].push_back(m_initial); // 0.0 should have the initial state
+		(dt.begin())->table.resize(m_alpbt.size());
+		(dt.begin())->table[0].push_back(m_initial); // 0.0 should have the initial state
 
-		curr_col=col;
+		curr_col=dt.begin();
 
 		int transcount=0;
-		while(true)
+		do
 		{
 			//for every element of the alphabet
 			int index=0;
@@ -203,7 +207,7 @@ FA FA::asmTo(FA fa)
 			{
 				transcount=0;
 				//for every state in the current column
-				for(int src=0;src<curr_col.table[0].size();src++)
+				for(int src=0;src<curr_col->table[0].size();src++)
 				{
 					//how many go from state [0][src] using the character input
 					transcount+= duplicate_trans(src,*input);
@@ -211,47 +215,98 @@ FA FA::asmTo(FA fa)
 				if(!transcount)
 				{
 					//inserting -1 into table[input][0] because we found no transitions
-					curr_col.table[index].push_back(-1);
+					curr_col->table[index].push_back(-1);
 					//the rest is only if we found transitions
 					continue;
 				}
 				std::vector<int> tmp(transcount),tmp2;
 				int cnt=0;
 				//again for every state in the current column
-				for(int src=0;src<curr_col.table[0].size();src++)
+				for(int src=0;src<curr_col->table[0].size();src++)
 				{
 						for(int j=0;j<m_transitions.size();j++)
 						{
 							//if found we should add it
-							if(m_transitions[j].first == std::make_pair(curr_col.table[0][src],*input))
+							if(m_transitions[j].first == std::make_pair(curr_col->table[0][src],*input))
 								tmp[cnt++]=m_transitions[j].second;
 						}
 				}
 				//tmp2=remove_duplicates();
 				//this duplicate free set is what we're gonna use for our final version
-				for(int j=0;j<curr_col.table[index].size();j++)
+				for(int j=0;j<curr_col->table[index].size();j++)
 				{
-					curr_col.table[index][j]=tmp2[j];
+					curr_col->table[index][j]=tmp2[j];
 				}
 				++index;
 			}
+
 			index=0;
 			for(std::set<char>::iterator input=m_alpbt.begin(); input!=m_alpbt.end();input++)
 			{
 				//checking if it's in the column
-				if(!is_in_col())
+				if(!is_in_col(curr_col->table[index],dt))
 					//checking if it's in the current column
-					if(!is_in_curr_col())
+					if(!is_in_curr_col(curr_col->table[index],index,curr_col))
 					{
 						//new column should be added if its header is legal
-						if(curr_col.table[index][0]!= -1)
-							add_col();
+						if(curr_col->table[index][0]!= -1)
+							add_col(dt,curr_col->table[index],state);
 					}
 				++index;
 			}
 			//if no more columns are added we can break
-		}
+		} while (curr_col == dt.end());
 
-		//change the table into a finite automata 
+		//change the table into a finite automata
 		return *this;
+	}
+	bool FA::is_in_col(std::vector<int> tab,std::list<Det_Table> dt)
+	{
+			if (dt.size()<1)
+				return true;
+			std::list<Det_Table>::iterator it=dt.begin();
+			for(;it!=dt.end();it++)
+			{
+				if(tab.size() != it->table[0].size())
+					continue;
+				for(int i=0;i<tab.size();i++)
+				{
+					if(it->table[0][i] != tab[i])
+						continue;
+					if(i == tab.size()-1)
+						return true;
+				}
+			}
+			return false;
+	}
+	bool FA::is_in_curr_col(std::vector<int> tab, int index, std::list<Det_Table>::iterator curr_col)
+	{
+		if(curr_col->table.size()<1)
+			return true;
+		for(int i=0;i<index;i++)
+		{
+			if(curr_col->table[i].size() != tab.size())
+				continue;
+			for(int j=0;j<tab.size();j++)
+			{
+				if(tab[j] != curr_col->table[i][j])
+					break;
+				if(j == tab.size()-1)
+					return 1;
+			}
+		}
+		return 0;
+	}
+	void FA::add_col(std::list<Det_Table> dt, std::vector<int> tab,int* st)
+	{
+		//inserting new column
+		dt.emplace_back(Det_Table());
+		std::list<Det_Table>::iterator it=dt.end();it--;
+		it->state=(*st)++;
+		//making sure we have enough room
+		it->table.resize(m_alpbt.size());
+
+		for(int i=0;i<tab.size();i++)
+			it->table[0][i]=tab[i];
+		return;
 	}

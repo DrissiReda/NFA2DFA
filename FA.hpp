@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <list>
 #include <set>
 #include <map>
 #include <algorithm>
@@ -35,6 +36,11 @@ public:
 	void reset();
 	int input(char inp);
 	int state();
+
+	//determinizing
+	bool is_in_col(std::vector<int> tab,std::list<Det_Table> dt);
+	bool is_in_curr_col(std::vector<int> tab, int index, std::list<Det_Table>::iterator curr_col);
+	void add_col(std::list<Det_Table> dt, std::vector<int> tab,int* st);
 
 	FA starring(); // changes exp to (exp)*
 	FA asmTo(FA); // changes exp1 to (exp1)|(exp2)
